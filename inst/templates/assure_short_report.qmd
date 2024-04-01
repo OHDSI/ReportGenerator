@@ -1,0 +1,248 @@
+---
+title: "ASSURE Summary Report"
+format: docx
+toc: true
+toc-depth: 4
+toc-title: "Contents"
+number-sections: true
+execute:
+  echo: false
+  warning: false
+params: 
+  server: NULL
+  password: NULL
+  username: NULL
+  dbms: NULL
+  resultsSchema: NULL
+  targetId: 1
+  outcomeId: 2
+  comparatorDf: NULL
+  friendlyNames: NULL
+  excludeText: NULL
+  timeRestrictionText: NULL
+  drugGap: 30
+---
+
+```{r}
+library(dplyr)
+#| echo: false
+#| hide: true
+
+friendlyNames <- data.frame(
+  id = c(1,2,3,4,5, 6),
+  name = c('target', 'outcome', 'comp 1', 'comp 2', 'ind 1', 'ind 2')
+)
+
+getName <- function(id, friendlyNames){
+  ind <- which(friendlyNames$id == id)
+  return(friendlyNames$name[ind][1])
+}
+
+targetName <- getName(
+  id = params$targetId,
+  friendlyNames = friendlyNames
+)
+outcomeName <- getName(
+  id = params$outcomeId,
+  friendlyNames = friendlyNames
+)
+
+# comparatorDf is
+#  data.frame(comparatorId, subsetId)
+comparatorDf <- data.frame(
+      comparatorId = c(3,4),
+      subsetId = c(5,6)
+    )
+
+getComparators <- function(
+    comparatorDf, 
+    friendlyNames
+){
+  
+  temp <- merge(
+    x = comparatorDf, 
+    y = friendlyNames, 
+    by.x = 'comparatorId',
+    by.y = 'id'
+      ) %>% dplyr::rename(
+        comparatorName = "name"
+      )
+  temp <- merge(
+    x = temp, 
+    y = friendlyNames, 
+    by.x = 'subsetId',
+    by.y = 'id'
+      ) %>% dplyr::rename(
+        indicationName = "name"
+      )
+  
+  temp$text <- paste0(
+    temp$comparatorName, 
+    ' (', 
+    temp$indicationName,
+    ' indication)'
+    )
+  
+  return(temp)
+}
+
+comparators <- getComparators(
+    comparatorDf = comparatorDf, 
+    friendlyNames = friendlyNames
+)
+
+# i) comp1, ii) comp2, ...
+comparatorText <- paste0(1:nrow(comparators), ') ', comparators$text, collapse = ', ')
+
+tarStart <- 'index + 0'
+tarEnd <- ' index + 60'
+
+# get number of databases that pass data diag
+nDatabases <- 5 #getDatabaseCount()
+
+# three claims databases (IQVIA PharMetrics Plus, Optum DoD, Merative MarketScan CCAE), one electronic health records database (Optum EHR) and one ambulatory electronic medical record (EMR) database (IQVIA Ambulatory EMR)
+databaseText <- '<db text>' #getDatabaseText()
+
+# number of negative controls
+nNegativeControls <- 100 #getNegativeControls()
+
+```
+
+# Summary report
+
+## Epidemiology Data
+A retrospective epidemiological analysis was conducted to assess the relationship between `r targetName` and `r outcomeName`. In addition to descriptive analyses, two causal analytic designs were employed: an active comparator new user cohort design and a self-controlled case series design. In the former design, new users of `r targetName` were compared to new users of `r comparatorText`. In the self-controlled case series design, the incidence of `r outcomeName` was compared between periods of `r targetName` use and periods of non-use.
+
+Assessments were conducted to determine the feasibility of retrospective real world (RWD) analyses of `r outcomeName` on the day of `r targetName` exposure across a global research network comprised of 12 healthcare databases. The research network included electronic medical record databases, insurance claims databases, and primary care/general practitioner databases, representing a broad range of patient populations (privately insured employees or patients with limited income). Cross-network analyses are enabled by mapping data sources to the Observational Medical Outcomes Partnership (OMOP) Common Data Model (CDM). The OMOP CDM maps source data on drug exposures and outcomes to RxNorm and the Systematized Nomenclature of Medicine Clinical Terms (SNOMED CT), respectively. `r nDatabases` databases in total passed initial feasibility tests with sufficient sample sizes, including `r databaseText`.
+
+### Exposure Identification
+
+The analysis was implemented for `r length(unique(comparators$indicationName))` indication/s.
+
+```{r, echo = F, results = 'asis'}
+for(i in 1:length(unique(comparators$indicationName))){
+
+indication <- unique(comparators$indicationName)[i]
+compInd <- comparators$indicationName == indication
+exposures <- unique(comparators$comparatorName[compInd])
+cat(paste0("\n\n#### ", indication))
+
+cat(paste0("\n", length(exposures)+1, " exposure cohorts were created for the active comparator new user cohort design: new users of ", targetName, " (target) and new users of ", paste0(exposures, collapse ='/')," (comparators)."))
+
+cat(paste0("The index date was defined as the first observed use of either the, ", targetName, ", or ",paste0(exposures, collapse ='/'),  ". "))
+
+cat(paste0("Patients were only included if they had a history of ", indication, ".\n")) 
+
+if(!is.null(params$excludeText)){
+cat(
+  paste0(
+    "Patients were excluded if ", 
+    params$excludeText, 
+    "."
+    )
+)
+}
+
+if(!is.null(params$timeRestrictionText)){
+cat(
+  paste0(
+    "The analysis was restricted to ", 
+    params$timeRestrictionText, 
+    "."
+    )
+)
+}
+
+cat(paste0(
+  "\nPatients were followed from the index date until the earliest of discontinuation of the index ", targetName, "  or switch to or addition of the comparator agent, end of observation in the database, or the occurrence of ",  outcomeName, " for an on-treatment analysis. Patients were considered to have discontinued their index exposure at the first occurrence of a gap of > ",  params$drugGap, " days between the end of one dispensing’s supply and the beginning of the next dispensing. We restricted the cohorts to patients with >= 365 days of prior database observation."
+))
+
+cat(paste0(
+  "\n\nFor the self-controlled case series design and incidence rate the exposure cohort was all exposures of ",  targetName,". Patients were only included if they had a history of ", indication, ". "
+  )
+  )
+  
+if(!is.null(params$excludeText)){
+cat(
+  paste0(
+    "Exposures were excluded if ", 
+    params$excludeText, 
+    "."
+    )
+)
+}
+
+}
+
+```
+
+
+### Outcome Identification
+
+The outcome was defined as <add>
+
+## ANALYSES
+
+### Characterization 
+Incidence proportion per 100 patients, in each database, was calculated by finding the number of patients with `r targetName` recorded in the database who have `r outcomeName` recorded between `r tarStart` and `r tarEnd` divided by the number of patients with `r targetName` recorded in the database multiplied by 100.
+
+### Causal Inference
+
+#### Active Comparator New User Design
+In the active comparator new user design, large-scale propensity scores were used to match new users of `r targetName` to new users of the comparator in a 1:n ratio (max n=100). Propensity score models included all variables available in the observational medical history, including all previously observed conditions, diagnoses, medications dispensed, measurements, and procedures recorded in the 30 and 365 days preceding the index date. Comorbidity indices calculated using all pre-index medical history and demographic variables (age, sex, race/ethnicity, index year, index month) were also included. Poisson models were used to estimate incidence rate ratios comparing the incidence of `r outcomeName` between new users of `r targetName` and new users of the comparator.
+
+#### Self-Controlled Case Series Design
+In the self-controlled case series design, Poisson regression was used to compare the incidence of `r outcomeName` between the day of `r targetName` exposure and periods of non-use. Spline terms for calendar time, season, and age were included in the model to adjust for time-varying confounding.
+
+#### Statistical Methods
+In both designs, negative control outcomes were used to quantify and correct for systematic bias via empirical calibration (Schuemie 2016; 2018). `r nNegativeControls` conditions with no association to `r targetName`, as identified in the literature, drug product labels, or AE reports, were selected as negative controls. Objective diagnostics related to statistical power and systematic error observed in negative controls were employed in both designs, while additional diagnostics related to covariate balance and temporal trends in incidence were employed in the active comparator new user and self-controlled case series analyses, respectively. These diagnostics were used to determine whether a given analysis could be unblinded and included in meta-analyses and are described in the table below.
+
+All analyses were conducted separately within each database and Bayesian random-effects meta-analysis was used to summarize across databases.
+
+
+| Diagnostic | Description | Relevant Analytic Design | 
+|-------|--------|-------|
+| Equipoise |  	We compute the percent of the population with a preference score between 0.3 and 0.7, called equipoise. The preference score is a linear transformation of the propensity score. The diagnostic failure threshold is an equipoise value of less than 20%. |	Comparative Cohort |
+| Covariate Balance |	We compute the standardized difference of mean (SDM) for every covariate that was used to balance any two exposure groups. The diagnostic failure threshold is any covariate having a SDM greater than or equal to 0.1. |	Comparative Cohort |
+| Systematic Error |	We fit a systematic error distribution using negative control estimates and summarize this as the Expected Absolute Systematic Error (EASE). An EASE of 0 means all variations in the negative control estimates can be explained by random error (as expressed for example in the CI). The diagnostic failure threshold for EASE is a value of greater than or equal to 0.25. |	Comparative Cohort; SCCS |
+| Study Power |	We compute the minimally detectable rate ratio which represents a transformation of study power noting the smallest observed effect estimate that we could expect to generate a significant finding (at an alpha level of 0.05), given the observed number of people and outcomes within the relevant study populations.  The diagnostic failure threshold for MDRR is a value of greater than or equal to 10. |	Comparative Cohort; SCCS |
+| Time Trend | The rate of an outcome may change as a function of calendar time. This may occur in instances because of data capture lag (incurred but not documented is expected to occur close to the date of data extraction), leading to (within subject) confounding. Although our design adjusts for this using a spline function over calendar time, we test if this adjustment was sufficient. For each month, we compute the rate of the outcome after adjustment using the spline, and test whether the rate after adjustment differs from the mean monthly rate before adjustment. We use a family-wise alpha of 0.05 and apply a Bonferroni correction for the number of months. The diagnostic failure threshold is the detection of at least one month having a rate statistically different from the mean. |	SCCS |
+| Reverse Causality | We test if the risk of the outcome is already increased just prior to the outcome. We compute p for (rate 30 days before exposure) > (rate 30 days after exposure). The diagnostic failure threshold for reverse causality test is a P < 0.05. |	SCCS |
+: Table 1:	Diagnostics For Each Analysis Design
+
+## Review of Epidemiology Studies
+
+### Characterization
+
+```{r,  results = 'asis', echo = F}
+
+incidenceTable <- data.frame(
+  database = paste0('database ', 1:3),
+  nPat = c(10,30,20),
+  nOut = c(3,2,1),
+  inc = runif(3)
+)
+
+# get the incidence tables 
+knitr::kable(
+  x = incidenceTable, 
+  format = "markdown", 
+  caption = 'Incidence rates across databases')
+
+```
+
+### Active Comparator New User Design
+No analysis passed our diagnostics. 
+
+### Self-Controlled Case Series Design
+No analysis passed our diagnostics.  
+
+
+
+## References
+Austin PC (2009). Balance diagnostics for comparing the distribution of baseline covariates between treatment groups in propensity-score matched samples. Stat Med. 2009 Nov 10;28(25):3083-107. doi: 10.1002/sim.3697. PMID: 19757444; PMCID: PMC3472075.
+
+Schuemie MJ (2016), Hripcsak G, Ryan PB, Madigan D, Suchard MA. Robust empirical calibration of p-values using observational data. Statistics in medicine. 2016;35(22):3883-3888.
+
+Schuemie MJ (2018), Hripcsak G, Ryan PB, Madigan D, Suchard MA. Empirical confidence interval calibration for population-level effect estimation studies in observational healthcare data. Proceedings of the National Academy of Sciences of the United States of America. 2018;115(11):2571-2577.
+
