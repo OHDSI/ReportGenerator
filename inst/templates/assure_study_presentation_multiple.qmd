@@ -27,6 +27,7 @@ params:
   outcomeIds: NULL
   comparatorIds: NULL
   subsetId: NULL
+  includeIndication: "yes"
   covariateIds: NULL
   friendlyNames: NULL
   details: NULL
@@ -55,6 +56,7 @@ outcomeIds <- unlist(params$outcomeIds)
 sccsTargetId <- params$targetId
 targetId <- params$targetId
 comparatorIds <- unlist(params$comparatorIds)
+includeIndication <- params$includeIndication == 'yes'
 
 # if a subset is specified then update the ids
 if(!is.null(subsetId)){
@@ -396,21 +398,23 @@ cat('\n\n::::')
           # only include tab if there are results
           cat(paste0('\n\n#### TAR: ',paste0('(',tar$startAnchor, " + ", tar$riskWindowStart, ') - (', tar$endAnchor, " + ", tar$riskWindowEnd, ')'),' \n\n')) 
           
-          if('TnO' %in% colnames(charsData) & 'TnOc' %in% colnames(charsData)){
-            charsData <- charsData %>%
+          if('Cases' %in% colnames(charsData) & 'Target' %in% colnames(charsData)){
+            # TODO add SMD calculator 
+         charsData <- charsData %>% 
               dplyr::mutate(
-                smd = abs(.data$TnO - .data$TnOc)/sqrt(1/2*((.data$TnO*(1-.data$TnO)) + (.data$TnOc*(1-.data$TnOc)) ))
+                smd = 0 
               )
-          } else if('TnOc' %in% colnames(charsData)){
+
+          } else if('Target' %in% colnames(charsData)){
             charsData <- charsData %>% 
               dplyr::mutate(
-                TnO = 0,
+                Cases = 0,
                 smd = 0 
               )
           } else{
             charsData <- charsData %>% 
               dplyr::mutate(
-                TnOc = 0,
+                Target = 0,
                 smd = 0 
               )
           }
@@ -424,12 +428,12 @@ cat('\n\n::::')
                     filterable = T, 
                     minWidth = 300 
                   ),
-                  TnO = reactable::colDef(
+                  Cases = reactable::colDef(
                     aggregate = "mean",
                     name = 'With Outcome',
                     format = reactable::colFormat(digits = 2)
                   ),
-                  TnOc = reactable::colDef(
+                  Target = reactable::colDef(
                     aggregate = "mean",
                     name = 'No Outcome',
                     format = reactable::colFormat(digits = 2)
@@ -1173,7 +1177,7 @@ for(i in 1:length(outcomeNames)){
 #| label: indication
 #| echo: false
 #| results: 'asis'
-if(!is.null(subsetId)){
+if(!is.null(subsetId) & includeIndication){
   # Indication
   # subCohort from the target code
   indicationId <- strsplit(

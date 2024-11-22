@@ -146,6 +146,7 @@ generatePresentation <- function(
 #' @param resultsSchema The result database schema
 #' @param targetId The cohort definition id for the target cohort
 #' @param subsetId Optional a subset ID for the cohort method/characterization and prediction results
+#' @param includeIndication Whether an indication was used in this study
 #' @param outcomeIds The cohort definition id for the outcome
 #' @param comparatorIds The cohort method comparator cohort id
 #' @param covariateIds A vector of covariateIds to include in the characterization
@@ -172,6 +173,7 @@ generatePresentationMultiple <- function(
     resultsSchema = NULL,
     targetId,
     subsetId = NULL,
+    includeIndication = TRUE,
     outcomeIds,
     comparatorIds,
     covariateIds = NULL,
@@ -240,6 +242,7 @@ generatePresentationMultiple <- function(
       resultsSchema = resultsSchema,
       targetId = targetId,
       subsetId = subsetId,
+      includeIndication = includeIndication,
       outcomeIds = outcomeIds,
       comparatorIds = comparatorIds,
       covariateIds = covariateIds,

@@ -347,13 +347,31 @@ getIncidenceRates <- function(
   )
   on.exit(DatabaseConnector::disconnect(connection))
   
+  #ct1.cohort_name as target_name, ct2.cohort_name as outcome_name
+  #inner join @result_schema.cg_cohort_definition ct1
+  #on ct1.cohort_definition_id = i.target_cohort_definition_id
+  #inner join @result_schema.cg_cohort_definition ct2
+  #on ct2.cohort_definition_id = i.outcome_cohort_definition_id
   
   sql <- 'select d.cdm_source_abbreviation as database, i.* 
-    from @schema.ci_INCIDENCE_SUMMARY i
+    from 
+    (select od.outcome_cohort_definition_id, od.clean_window, agd.age_group_name, 
+    tad.tar_start_with, tad.tar_start_offset, tad.tar_end_with, tad.tar_end_offset,
+    sd.subgroup_name, i.*
+  from @schema.ci_INCIDENCE_SUMMARY i
+  join @schema.ci_OUTCOME_DEF od on i.outcome_id = od.outcome_id
+    and i.ref_id = od.ref_id
+  join @schema.ci_TAR_DEF tad on i.tar_id = tad.tar_id
+    and i.ref_id = tad.ref_id
+  join @schema.ci_SUBGROUP_DEF sd on i.subgroup_id = sd.subgroup_id
+    and i.ref_id = sd.ref_id
+  left join @schema.ci_AGE_GROUP_DEF agd on i.age_group_id = agd.age_group_id
+    and i.ref_id = agd.ref_id
+ ) i
     inner join @schema.@database_table_name d
     on d.database_id = i.database_id
     where target_cohort_definition_id in (@target_id)
-    and outcome_cohort_definition_id in (@outcome_id)
+    and outcome_id in (@outcome_id)
     ;'
 
   sql <- SqlRender::render(
@@ -407,12 +425,15 @@ getCounts <- function(
   sql <- "
   select 
   d.CDM_SOURCE_ABBREVIATION as database_name,
-  cd.COHORT_DEFINITION_ID,
-  cd.COHORT_TYPE,
-  s.RISK_WINDOW_START,
-  s.RISK_WINDOW_END,
-  s.START_ANCHOR,
-  s.END_ANCHOR,
+  cc.target_cohort_ID,
+  cc.outcome_cohort_ID,
+  cc.COHORT_TYPE,
+  cc.min_prior_observation,
+  cc.outcome_washout_days,
+  cc.RISK_WINDOW_START,
+  cc.RISK_WINDOW_END,
+  cc.START_ANCHOR,
+  cc.END_ANCHOR,
   cc.ROW_COUNT,
   cc.PERSON_COUNT
 
@@ -421,21 +442,10 @@ getCounts <- function(
   inner join
   @schema.database_meta_data d
   on cc.database_id = d.database_id
-  
-  inner join
-  @schema.c_COHORT_DETAILS cd
-  
-  on cd.COHORT_DEFINITION_ID = cc.COHORT_DEFINITION_ID
-  and cd.database_id = cc.database_id 
-  and cd.run_id = cc.run_id
-  
-  inner join @schema.c_settings s
-  on s.run_id = cc.run_id
-  and s.database_id = cc.database_id
-  
-  where cd.TARGET_COHORT_ID = @target_id 
-  and cd.OUTCOME_COHORT_ID = @outcome_id
-  and cd.COHORT_TYPE in ('TnOc', 'TnO')
+
+  where cc.TARGET_COHORT_ID = @target_id 
+  and cc.OUTCOME_COHORT_ID in (@outcome_id,0)
+  and cc.COHORT_TYPE in ('Target', 'Cases', 'Exclude')
   ;"
   
   sql <- SqlRender::render(
@@ -451,10 +461,12 @@ getCounts <- function(
     snakeCaseToCamelCase = T
   )
   
-  result <- tidyr::pivot_wider(
-    data = result, 
+  caseresult <- tidyr::pivot_wider(
+    data = result %>% dplyr::filter(.data$cohortType != 'Target'), 
     id_cols = c(
       'databaseName',
+      'minPriorObservation',
+      'outcomeWashoutDays',
       'riskWindowStart',
       'riskWindowEnd',
       'startAnchor',
@@ -463,6 +475,23 @@ getCounts <- function(
     names_from = c('cohortType'), 
     values_from = 'rowCount'
   )
+  
+  targetresult <- tidyr::pivot_wider(
+    data = result %>% dplyr::filter(.data$cohortType == 'Target'), 
+    id_cols = c(
+      'databaseName',
+      'minPriorObservation'
+    ), 
+    names_from = c('cohortType'), 
+    values_from = 'rowCount'
+  )
+  
+  result <- merge(
+    x = caseresult, 
+    y = targetresult, 
+    by = c('databaseName',
+           'minPriorObservation')
+    )
   
   return(result)
 }
@@ -494,6 +523,8 @@ getDemographics <- function(
     "select 
 d.CDM_SOURCE_ABBREVIATION as database_name,
 cd.COHORT_TYPE,
+s.min_prior_observation,
+s.outcome_washout_days,
 s.RISK_WINDOW_START,
 s.RISK_WINDOW_END,
 s.START_ANCHOR,
@@ -514,28 +545,30 @@ select * from @schema.c_COVARIATE_REF
 
 on 
 c.database_id = coi.database_id and
-c.run_id = coi.run_id and
+c.setting_id = coi.setting_id and
 c.covariate_id = coi.covariate_id
 
 inner join
 @schema.c_COHORT_DETAILS cd
-on cd.COHORT_DEFINITION_ID = c.COHORT_DEFINITION_ID
-and cd.database_id = c.database_id and
-cd.run_id = c.run_id 
+
+on cd.TARGET_COHORT_ID = c.TARGET_COHORT_ID
+and cd.OUTCOME_COHORT_ID = c.OUTCOME_COHORT_ID
+and cd.COHORT_TYPE = c.COHORT_TYPE
+and cd.database_id = c.database_id 
+and cd.setting_id = c.setting_id 
 
 inner join
 @schema.database_meta_data d
 on 
 c.database_id = d.database_id
 
-inner join 
-@schema.c_settings s
-on s.run_id = c.run_id
+inner join @schema.c_settings s
+on s.setting_id = c.setting_id
 and s.database_id = c.database_id
 
-where cd.TARGET_COHORT_ID = @target_id 
-and cd.OUTCOME_COHORT_ID = @outcome_id 
-and cd.COHORT_TYPE in ('TnOc', 'TnO')
+where cd.TARGET_COHORT_ID = @target_id
+and cd.OUTCOME_COHORT_ID in (@outcome_id, 0)
+and cd.COHORT_TYPE in ('Target', 'Cases', 'Exclude')
 
 ;
 "
@@ -558,12 +591,13 @@ sexTable <- DatabaseConnector::querySql(
   sql <- "select 
 d.CDM_SOURCE_ABBREVIATION as database_name,
 cd.COHORT_TYPE,
+s.min_prior_observation,
+s.outcome_washout_days,
 s.RISK_WINDOW_START,
 s.RISK_WINDOW_END,
 s.START_ANCHOR,
 s.END_ANCHOR,
 coi.covariate_name,
-coi.covariate_id,
 c.sum_value,
 c.average_value
 
@@ -575,28 +609,30 @@ select * from @schema.c_covariate_ref where analysis_id in (3)
 
 on 
 c.database_id = coi.database_id and
-c.run_id = coi.run_id and
+c.setting_id = coi.setting_id and
 c.covariate_id = coi.covariate_id
 
 inner join
 @schema.c_COHORT_DETAILS cd
-on cd.COHORT_DEFINITION_ID = c.COHORT_DEFINITION_ID
-and cd.database_id = c.database_id and
-cd.run_id = c.run_id 
+
+on cd.TARGET_COHORT_ID = c.TARGET_COHORT_ID
+and cd.OUTCOME_COHORT_ID = c.OUTCOME_COHORT_ID
+and cd.COHORT_TYPE = c.COHORT_TYPE
+and cd.database_id = c.database_id 
+and cd.setting_id = c.setting_id 
 
 inner join
 @schema.database_meta_data d
 on 
 c.database_id = d.database_id
 
-inner join 
-@schema.c_settings s
-on s.run_id = c.run_id
+inner join @schema.c_settings s
+on s.setting_id = c.setting_id
 and s.database_id = c.database_id
 
-where cd.TARGET_COHORT_ID = @target_id 
-and cd.OUTCOME_COHORT_ID =@outcome_id
-and cd.COHORT_TYPE in ('TnOc', 'TnO')
+where cd.TARGET_COHORT_ID = @target_id
+and cd.OUTCOME_COHORT_ID in (@outcome_id, 0)
+and cd.COHORT_TYPE in ('Target', 'Cases', 'Exclude')
 
 ;
 "
@@ -666,6 +702,8 @@ getCharacterization <- function(
   sql <- "select 
 d.CDM_SOURCE_ABBREVIATION as database,
 cd.COHORT_TYPE,
+s.min_prior_observation,
+s.outcome_washout_days,
 s.RISK_WINDOW_START,
 s.RISK_WINDOW_END,
 s.START_ANCHOR,
@@ -686,15 +724,17 @@ select * from @schema.c_COVARIATE_REF
 
 on 
 c.database_id = coi.database_id and
-c.run_id = coi.run_id and
+c.setting_id = coi.setting_id and
 c.covariate_id = coi.covariate_id
 
 inner join
 @schema.c_COHORT_DETAILS cd
 
-on cd.COHORT_DEFINITION_ID = c.COHORT_DEFINITION_ID
+on cd.TARGET_COHORT_ID = c.TARGET_COHORT_ID
+and cd.OUTCOME_COHORT_ID = c.OUTCOME_COHORT_ID
+and cd.COHORT_TYPE = c.COHORT_TYPE
 and cd.database_id = c.database_id 
-and cd.run_id = c.run_id 
+and cd.setting_id = c.setting_id 
 
 inner join
 @schema.database_meta_data d
@@ -702,12 +742,12 @@ on
 c.database_id = d.database_id
 
 inner join @schema.c_settings s
-on s.run_id = c.run_id
+on s.setting_id = c.setting_id
 and s.database_id = c.database_id
 
 where cd.TARGET_COHORT_ID = @target_id
-and cd.OUTCOME_COHORT_ID = @outcome_id
-and cd.COHORT_TYPE in ('TnOc', 'TnO')
+and cd.OUTCOME_COHORT_ID in (@outcome_id, 0)
+and cd.COHORT_TYPE in ('Target', 'Cases', 'Exclude')
 ;
 "
 

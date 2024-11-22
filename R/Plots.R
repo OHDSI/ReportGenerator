@@ -15,7 +15,7 @@ formatCohortType <- function(
     cohortType
 ){
   x <- rep('No outcome', length(cohortType))
-  x[cohortType == 'TnO'] <- 'outcome'
+  x[cohortType == 'Cases'] <- 'outcome'
   
   return(x)
 }
@@ -29,19 +29,25 @@ plotAgeDistributions <- function(
 ){
   # TODO add input checks
   
-  tarInd <- ageData$riskWindowStart == riskWindowStart &
-    ageData$riskWindowEnd == riskWindowEnd &
-    ageData$startAnchor == startAnchor &
-    ageData$endAnchor == endAnchor
+  ageData <- ageData %>%
+    dplyr::filter(
+      .data$riskWindowStart %in% c(NA,riskWindowStart) &
+      .data$riskWindowEnd %in% c(NA,riskWindowEnd) &
+        .data$startAnchor %in% c(NA,startAnchor) &
+        .data$endAnchor %in% c(NA, endAnchor)
+      )
   
-  if(sum(tarInd) == 0){
+  if(nrow(ageData) == 0){
     return() # empty plot?
-  } else{
-    ageData <- ageData[tarInd,]
-  }
+  } 
   # TODO add input checks
   
-ind <- ageData$cohortType == 'TnOc'
+  # filter to Target and Cases and remove censored
+  ageData <- ageData %>% 
+    dplyr::filter(.data$sumValue > 0) %>%
+    dplyr::filter(.data$cohortType %in% c('Target', 'Cases'))
+  
+ind <- ageData$cohortType == 'Target'
 ageData$averageValue[ind] <- -1*ageData$averageValue[ind] 
 ageData$tar <- addTar(ageData)
 result <- ggplot2::ggplot(
@@ -81,18 +87,24 @@ plotSexDistributions <- function(
     ){
   # TODO add input checks
   
-  tarInd <- sexData$riskWindowStart == riskWindowStart &
-    sexData$riskWindowEnd == riskWindowEnd &
-    sexData$startAnchor == startAnchor &
-    sexData$endAnchor == endAnchor
+  sexData <- sexData %>% 
+    dplyr::filter(
+      .data$riskWindowStart %in% c(NA,riskWindowStart) &
+      .data$riskWindowEnd %in% c(NA,riskWindowEnd) &
+      .data$startAnchor %in% c(NA,startAnchor) &
+      .data$endAnchor %in% c(NA, endAnchor)
+  )
   
-  if(sum(tarInd) == 0){
+  if(nrow(sexData) == 0){
     return() # empty plot?
-  } else{
-    sexData <- sexData[tarInd,]
-  }
+  } 
   
-  ind <- sexData$cohortType == 'TnOc'
+  # filter to Target and Cases and remove censored
+  sexData <- sexData %>% 
+    dplyr::filter(.data$sumValue > 0) %>%
+    dplyr::filter(.data$cohortType %in% c('Target', 'Cases'))
+  
+  ind <- sexData$cohortType == 'Target'
   sexData$averageValue[ind] <- -1*sexData$averageValue[ind] 
   sexData$tar <- addTar(sexData)
   
