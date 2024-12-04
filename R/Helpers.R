@@ -371,7 +371,7 @@ getIncidenceRates <- function(
     inner join @schema.@database_table_name d
     on d.database_id = i.database_id
     where target_cohort_definition_id in (@target_id)
-    and outcome_id in (@outcome_id)
+    and outcome_cohort_definition_id in (@outcome_id)
     ;'
 
   sql <- SqlRender::render(

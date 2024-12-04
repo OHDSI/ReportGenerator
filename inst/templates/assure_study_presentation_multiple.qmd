@@ -1,5 +1,5 @@
 ---
-title: "Signal Evaluation Report"
+title: "ASSURE Analysis" 
 format:
   revealjs: 
     self-contained: true
@@ -92,7 +92,6 @@ reactable::reactable(data.frame(Study = "Multiple comparators and/or multiple ou
 
 ```
 
-
 ```{r}
 #| label: summary
 #| echo: false
@@ -151,8 +150,7 @@ cat('\n\n:::')
 
 ## Cohort Incidence
 
-::: {style='font-size: 50%;'}
-
+::: {style="font-size: 50%;"}
 ```{r}
 #| label: cohort incidence
 #| echo: false
@@ -252,13 +250,11 @@ cat('\n\n:::')
 cat('\n\n::::')
 
 ```
-
 :::
 
 ## Cohort Demographics
 
-::: {style='font-size: 50%;'}
-
+::: {style="font-size: 50%;"}
 ```{r}
 #| label: cohort demographics
 #| echo: false
@@ -333,13 +329,11 @@ cat('\n\n::::')
   }
   cat('\n\n::::\n')
 ```
-
 :::
-  
-## Cohort Characterization
-  
-::: {style='font-size: 50%;'}
 
+## Cohort Characterization
+
+::: {style="font-size: 50%;"}
 ```{r}
 #| label: cohort characterization
 #| echo: false
@@ -461,15 +455,13 @@ cat('\n\n::::')
   cat('\n::::')
 
 ```
-
 :::
-  
-# Causal Inference {.break-slides}
-  
-## Cohort Method
-  
-::: {style='font-size: 50%;'}
 
+# Causal Inference {.break-slides}
+
+## Cohort Method
+
+::: {style="font-size: 50%;"}
 ```{r}
 #| label: cohort method 
 #| echo: false
@@ -676,19 +668,16 @@ for(outcomeId in outcomeIds){
 cat('\n\n:::::')
 
 ```
-
 :::
 
 ## Self Controlled Case Series
-  
-::: {style='font-size: 50%;'}
+
+::: {style="font-size: 50%;"}
 ::: {.panel-tabset .nav-pills}
-
 ### Study Diagnostics
-:::: {.columns}
 
+::: columns
 ::: {.column width="85%"}
-
 ```{r}
 #| label: sccs diagostics
 runSCCS <- F
@@ -737,21 +726,17 @@ if(runSCCS){
   )
 }
 ```
-
 :::
-  
-::: {.column width="15%"}
 
+::: {.column width="15%"}
 > Fail: Study failed ASSURE diagnostics
 
 > Pass: Study passed without warnings
 
 > Number: Passed wth Number of warnings
-
 :::
-  
-::::
-  
+:::
+
 ```{r}
 #| label: sccs estimation
 
@@ -779,6 +764,7 @@ if(runSCCS){
 ```
 
 ### Table Results
+
 ```{r}
 #| label: sccs estimation table
 
@@ -823,7 +809,8 @@ if(runSCCS){
 ```
 
 ### Plot Results
-::: {.panel-tabset}
+
+::: panel-tabset
 ```{r}
 #| label: sccs estimation plot
 #| echo: false
@@ -851,30 +838,24 @@ if(runSCCS){
 
 ```
 :::
-  
 :::
 :::
-  
-  
+
 # Prediction {.break-slides}
-  
+
 ## Models
-  
-::: {style='font-size: 50%;'}
 
-:::: {.panel-tabset .nav-pills}
-
+::: {style="font-size: 50%;"}
+::: {.panel-tabset .nav-pills}
 ### Model Summary
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="80%"}
-
 ```{r}
 #| label: prediction
 #| echo: false
 #| results: 'asis'
-
+if (F) {
 # panel for outcomes
 cat('\n::: {.panel-tabset .nav-pills}')
 for(outcomeId in outcomeIds){
@@ -935,31 +916,26 @@ for(outcomeId in outcomeIds){
   
 }
 cat('\n:::') # outcome tabs
-
+}
 ```
-
 :::
-  
+
 ::: {.column width="20%"}
+> AUROC: A measure of model discrimination. 1 is best. Probability a random person with the outcome has a higher risk than an random person without the outcome.
 
-> AUROC: A measure of model discrimination. 1 is best.  Probability a random person with the outcome has a higher risk than an random person without the outcome.
-
-> e-stat: A measure of calibration.  Smaller is better. How accurate the predicted risks are.
+> e-stat: A measure of calibration. Smaller is better. How accurate the predicted risks are.
 
 > brier: Overall error. Smaller is better.
-
 :::
-  
-::::
-  
-  
+:::
+
 ### Top Predictors
-  
+
 ```{r}
 #| label: predictors
 #| echo: false
 #| results: 'asis'
-
+if (F) {
 # panel for outcomes
 cat('\n\n:::: {.panel-tabset .nav-pills}')
 for(outcomeId in outcomeIds){
@@ -1041,16 +1017,15 @@ for(outcomeId in outcomeIds){
   }
 }
 cat('\n\n::::')
+}
 ```
-
-::::
-  
 :::
-  
+:::
+
 # Conclusions {.break-slides}
-  
+
 ## Executive Summary
-  
+
 ```{r}
 #| label: executive summary
 #| echo: false
@@ -1082,6 +1057,7 @@ cat(paste0('\n\n## Target ',targetName, ' {#sec-target}\n\n'))
 
 ::: {.callout-note title="Cohort Definition"}
 ### Cohort Definition
+
 ```{r}
 #| echo: false
 #| results: 'asis'
@@ -1103,9 +1079,8 @@ markdown <- tryCatch(
 cat(markdown)
 
 ```
-
 :::
-  
+
 ```{r}
 #| echo: false
 #| results: 'asis'
@@ -1138,8 +1113,6 @@ if(!is.null(subsetId)){
 
 ```
 
-
-
 ```{r}
 #| label: outcomes
 #| echo: false
@@ -1171,7 +1144,6 @@ for(i in 1:length(outcomeNames)){
 }
 
 ```
-
 
 ```{r}
 #| label: indication
@@ -1212,8 +1184,6 @@ if(!is.null(subsetId) & includeIndication){
   cat('\n\n:::')
 }
 ```
-
-
 
 ```{r}
 #| label: comparators
