@@ -1,0 +1,28 @@
+DBMS:
+postgresql
+
+Error:
+org.postgresql.util.PSQLException: ERROR: relation "ase_061.database_meta_data" does not exist
+  Position: 37
+
+SQL:
+select CDM_SOURCE_ABBREVIATION from ase_061.database_meta_data;
+
+R version:
+R version 4.3.2 (2023-10-31 ucrt)
+
+Platform:
+x86_64-w64-mingw32
+
+Attached base packages:
+- stats
+- graphics
+- grDevices
+- utils
+- datasets
+- methods
+- base
+
+Other attached packages:
+- dplyr (1.1.4)
+- reactable (0.4.4)
