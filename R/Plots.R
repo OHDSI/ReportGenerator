@@ -165,12 +165,12 @@ plotCmEstimates <- function(
       nComparator = prettyNum(.data$comparatorSubjects, big.mark = ","),
       targetIr = ifelse(
         .data$targetOutcomes < 1,
-        paste0("<", as.character(sprintf(fmtIncidenceRate, 5 / .data$targetDays * .data$incidenceRateMult))),
-        as.character(sprintf(fmtIncidenceRate, .data$targetOutcomes / .data$targetDays * .data$incidenceRateMult))),
+        paste0("<", as.character(sprintf(fmtIncidenceRate, 5 / .data$targetDays * !!incidenceRateMult))),
+        as.character(sprintf(fmtIncidenceRate, .data$targetOutcomes / .data$targetDays * !!incidenceRateMult))),
       comparatorIr = ifelse(
         .data$comparatorOutcomes < 1, 
-        paste0("<", as.character(sprintf(fmtIncidenceRate, 5 / .data$comparatorDays * .data$incidenceRateMult))),
-        as.character(sprintf(fmtIncidenceRate, .data$comparatorOutcomes / .data$comparatorDays * .data$incidenceRateMult))),
+        paste0("<", as.character(sprintf(fmtIncidenceRate, 5 / .data$comparatorDays * !!incidenceRateMult))),
+        as.character(sprintf(fmtIncidenceRate, .data$comparatorOutcomes / .data$comparatorDays * !!incidenceRateMult))),
       mean = .data$calibratedRr,
       lower = .data$calibratedCi95Lb,
       upper = .data$calibratedCi95Ub,
