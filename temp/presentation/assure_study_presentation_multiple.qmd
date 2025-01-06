@@ -8,7 +8,7 @@ format:
     logo: img/logo.png
     title-slide-attributes:
       data-background-color: "#EB1700"
-    footer: "ASSURE Standardized report"
+    footer: "<div class='custom-footer'>J&J Innovative Medicine</div>"
     slide-number: true
     show-slide-number: all
     menu:
@@ -33,7 +33,16 @@ params:
   details: NULL
   evaluationText: NULL
 ---
+
 ## ASSURE Analysis Request {.break-slides}
+
+- bullet point 1
+- bullet point 2
+
+## Topline Result {.break-slides}
+
+- bullet point 1
+- bullet point 2
 
 ## ASSURE Analysis Specifications {.break-slides}
 
@@ -88,8 +97,9 @@ dbs <- ReportGenerator:::getDbs(
 )
 
 
+
 # If this first initialization isn't run, tabs won't print
-reactable::reactable(data.frame(Study = "Multiple comparators and/or multiple outcomes."))
+#reactable::reactable(data.frame(Study = "Multiple comparators and/or multiple outcomes."))
 
 ```
 
@@ -99,54 +109,69 @@ reactable::reactable(data.frame(Study = "Multiple comparators and/or multiple ou
 #| echo: false
 #| results: 'asis'
 
-cat('\n\n:::: {.columns}')
-cat('\n\n::: {.column width="50%"}')
-cat(paste0('\n\n> Target: ', targetName,' @sec-target'))
 
-cat(paste0('\n\n> Comparators: ',paste0(comparatorNames, ' @sec-',ReportGenerator::removeSpaces(comparatorNames), collapse =', ')))
-
-cat(paste0('\n\n> Indication: ', indicationName,' @sec-indication'))
-
-cat(paste0('\n\n> Outcomes: ', paste0(outcomeNames, ' @sec-',ReportGenerator::removeSpaces(outcomeNames), collapse =', ')))
-cat('\n\n:::')
-
-cat('\n\n::: {.column width="10%"}')
-cat('\n\n<!-- empty column to create gap -->')
-cat('\n\n:::')
-
-cat('\n\n::: {.column width="40%"}')
-cat('\n\n::: {.border}')
-cat('\n\n::: {style="font-size: 50%;"}')
-
-cat('\n\n| Study Period: ')
-cat(paste0('\n| ', studyPeriod))
-
-cat('\n\n| Restrictions:') 
-cat(paste0('\n| ', restrictions))
-
-cat('\n\n| Analytic Methods:') 
+cat(paste0('\n\n| Indication(s): ', indicationName))
+cat(paste0('\n\n| Target drug: ', targetName))
+#cat(paste0('\n\n> Comparators: ',paste0(comparatorNames, ' @sec-',ReportGenerator::removeSpaces(comparatorNames), collapse =', ')))
+cat(paste0('\n\n| Safety outcomes: ', paste0(ReportGenerator::removeSpaces(outcomeNames), collapse =', ')))
+cat(paste0('\n\n| Comparator drug(s): ',paste0(ReportGenerator::removeSpaces(comparatorNames), collapse =', ')))
+cat('\n\n| Exclusion criteria:') 
+cat('\n\n| Subpopulation of interest:')
+cat('\n\n| Stratification(s):')
+cat('\n\n| Risk window:')
+cat('\n\n| Prior observation time:')
+cat('\n\n| Clean Window:')
+cat('\n\n| Study Period: ',studyPeriod)
+cat('\n\n| Evidence Needed:')
 cat('\n|   * Characterization')
-cat('\n|   * Propensity-matched comparative cohort on treatment')
-cat('\n|   * Self-controlled case series (SCCS)')
-cat('\n|   * Patient-level prediction')
+cat('\n|   * Estimation')
 
-cat('\n\n| Databases: ')
-cat(paste0('\n|   *  ', dbs[['us claims']], ' US Claims'))
-cat(paste0('\n|   *  ', dbs[['us ehr']], '  US EHR'))
-cat(paste0('\n|   *  ', dbs[['non-us claims']], '  Non-US Claims'))
-
-cat('\n\n:::')
-cat('\n\n:::')
-cat('\n\n:::')
-
-cat('\n\n::::')
-
-cat(paste0('\n\n::: footer
-', paste0(params$title, ' - ', params$lead, ' - ', as.character(params$date))))
-
-cat('\n\n:::')
 
 ```
+## Database Selection {.break-slides}
+
+```{r}
+#| label: Database selection
+#| echo: false
+#| hide: true
+
+
+dbs <- ReportGenerator:::getDbs(
+  resultsSchema = resultsSchema,
+  server = server,
+  username = username,
+  password = password,
+  dbms = dbms
+)
+```
+
+```{r}
+#| label: Database selection
+#| echo: false
+#| results: 'asis'
+
+print(
+    shiny::tagList(
+      reactable::reactable(
+        data = dbs %>% 
+          dplyr::select(
+            'Database Name',
+            'Description',
+            'Version',
+            'Type',
+            'Region',
+            'Time Period'
+          ),
+
+        defaultPageSize = defaultPageSize,
+        highlight = TRUE,
+        striped = T
+      )))
+
+
+```
+
+
 
 # Characterization {.break-slides}
 

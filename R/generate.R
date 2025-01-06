@@ -194,7 +194,7 @@ generatePresentationMultiple <- function(
     evaluationText = '',
     outputLocation = getwd(),
     outputName = paste0('presentation_', gsub(':', '_',gsub(' ','_',as.character(date()))),'.html'),
-    intermediateDir = tempdir()
+    intermediateDir = file.path(getwd(), 'temp/presentation')
 ){
   
   # calling random functions used in quarto doc 
@@ -266,3 +266,4 @@ generatePresentationMultiple <- function(
   
   return(file.path(outputLocation, outputName))
 }
+
