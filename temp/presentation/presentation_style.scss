@@ -1,0 +1,70 @@
+/*-- scss:defaults --*/
+$jnj-grey: #5E4F47;
+$jnj-red: #EB1700;
+$white: #FFFFFF;
+
+/*-- scss:rules --*/
+.reveal section h2 {
+  color: $jnj-red;
+}
+
+[role="tab"][aria-selected="true"]{
+  color: $white;
+  font-weight: bold;
+  background-color: $jnj-red !important;
+}
+[role="tab"][aria-selected="false"]{
+  color: $jnj-red;
+  font-weight: normal;
+}
+
+.break-slides {
+  color: $jnj-red;
+  background-color: $white !important;
+}
+
+.title {
+  font-size: 120px !important;
+  color: $white !important;
+  background-color: $jnj-red !important;
+}
+.custom-footer {
+  position: fixed;
+  left: 10px; /* Adjust as needed */
+  bottom: 50px; /* Adjust as needed */
+  color: $jnj-red; /* Set color to your preference */
+  font-size: 18px; /* Adjust font size */
+  z-index: 1000; /* Ensure it appears above other content */
+}
+
+/* Style for the table */
+table {
+  border-collapse: collapse; /* Merge borders */
+  width: 100%;               /* Make table full width */
+}
+
+th, td {
+  padding: 8px;              /* Cell padding */
+  text-align: left;          /* Left-align text in cells */
+}
+
+/* Apply specific styles for the header */
+thead {
+  background-color: red;     /* Red header */
+  color: white;              /* White text color for header */
+}
+
+/* Apply alternating colors for rows */
+tr:nth-child(even) {
+  background-color: pink;     /* Light pink background for even rows */
+}
+
+tr:nth-child(odd) {
+  background-color: white;    /* White background for odd rows */
+}
+
+/* Optional: borders for clarity */
+table, th, td {
+  border: 1px solid black;    /* Border for table and cells */
+}
+

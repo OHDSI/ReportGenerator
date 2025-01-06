@@ -1,5 +1,5 @@
 ---
-title: "ASSURE Analysis" 
+title: "ASSURE Analysis"
 format:
   revealjs: 
     self-contained: true
@@ -27,14 +27,11 @@ params:
   outcomeIds: NULL
   comparatorIds: NULL
   subsetId: NULL
-  includeIndication: "yes"
   covariateIds: NULL
   friendlyNames: NULL
   details: NULL
   evaluationText: NULL
 ---
-## ASSURE Analysis Request
-
 
 ## Signal Evaluation Overview
 
@@ -58,7 +55,6 @@ outcomeIds <- unlist(params$outcomeIds)
 sccsTargetId <- params$targetId
 targetId <- params$targetId
 comparatorIds <- unlist(params$comparatorIds)
-includeIndication <- params$includeIndication == 'yes'
 
 # if a subset is specified then update the ids
 if(!is.null(subsetId)){
@@ -93,6 +89,7 @@ dbs <- ReportGenerator:::getDbs(
 reactable::reactable(data.frame(Study = "Multiple comparators and/or multiple outcomes."))
 
 ```
+
 
 ```{r}
 #| label: summary
@@ -152,7 +149,8 @@ cat('\n\n:::')
 
 ## Cohort Incidence
 
-::: {style="font-size: 50%;"}
+::: {style='font-size: 50%;'}
+
 ```{r}
 #| label: cohort incidence
 #| echo: false
@@ -252,11 +250,13 @@ cat('\n\n:::')
 cat('\n\n::::')
 
 ```
+
 :::
 
 ## Cohort Demographics
 
-::: {style="font-size: 50%;"}
+::: {style='font-size: 50%;'}
+
 ```{r}
 #| label: cohort demographics
 #| echo: false
@@ -331,11 +331,13 @@ cat('\n\n::::')
   }
   cat('\n\n::::\n')
 ```
+
 :::
-
+  
 ## Cohort Characterization
+  
+::: {style='font-size: 50%;'}
 
-::: {style="font-size: 50%;"}
 ```{r}
 #| label: cohort characterization
 #| echo: false
@@ -394,23 +396,21 @@ cat('\n\n::::')
           # only include tab if there are results
           cat(paste0('\n\n#### TAR: ',paste0('(',tar$startAnchor, " + ", tar$riskWindowStart, ') - (', tar$endAnchor, " + ", tar$riskWindowEnd, ')'),' \n\n')) 
           
-          if('Cases' %in% colnames(charsData) & 'Target' %in% colnames(charsData)){
-            # TODO add SMD calculator 
-         charsData <- charsData %>% 
+          if('TnO' %in% colnames(charsData) & 'TnOc' %in% colnames(charsData)){
+            charsData <- charsData %>%
               dplyr::mutate(
-                smd = 0 
+                smd = abs(.data$TnO - .data$TnOc)/sqrt(1/2*((.data$TnO*(1-.data$TnO)) + (.data$TnOc*(1-.data$TnOc)) ))
               )
-
-          } else if('Target' %in% colnames(charsData)){
+          } else if('TnOc' %in% colnames(charsData)){
             charsData <- charsData %>% 
               dplyr::mutate(
-                Cases = 0,
+                TnO = 0,
                 smd = 0 
               )
           } else{
             charsData <- charsData %>% 
               dplyr::mutate(
-                Target = 0,
+                TnOc = 0,
                 smd = 0 
               )
           }
@@ -424,12 +424,12 @@ cat('\n\n::::')
                     filterable = T, 
                     minWidth = 300 
                   ),
-                  Cases = reactable::colDef(
+                  TnO = reactable::colDef(
                     aggregate = "mean",
                     name = 'With Outcome',
                     format = reactable::colFormat(digits = 2)
                   ),
-                  Target = reactable::colDef(
+                  TnOc = reactable::colDef(
                     aggregate = "mean",
                     name = 'No Outcome',
                     format = reactable::colFormat(digits = 2)
@@ -457,13 +457,15 @@ cat('\n\n::::')
   cat('\n::::')
 
 ```
+
 :::
-
+  
 # Causal Inference {.break-slides}
-
+  
 ## Cohort Method
+  
+::: {style='font-size: 50%;'}
 
-::: {style="font-size: 50%;"}
 ```{r}
 #| label: cohort method 
 #| echo: false
@@ -670,16 +672,19 @@ for(outcomeId in outcomeIds){
 cat('\n\n:::::')
 
 ```
+
 :::
 
 ## Self Controlled Case Series
-
-::: {style="font-size: 50%;"}
+  
+::: {style='font-size: 50%;'}
 ::: {.panel-tabset .nav-pills}
-### Study Diagnostics
 
-::: columns
+### Study Diagnostics
+:::: {.columns}
+
 ::: {.column width="85%"}
+
 ```{r}
 #| label: sccs diagostics
 runSCCS <- F
@@ -728,17 +733,21 @@ if(runSCCS){
   )
 }
 ```
-:::
 
+:::
+  
 ::: {.column width="15%"}
+
 > Fail: Study failed ASSURE diagnostics
 
 > Pass: Study passed without warnings
 
 > Number: Passed wth Number of warnings
-:::
-:::
 
+:::
+  
+::::
+  
 ```{r}
 #| label: sccs estimation
 
@@ -766,7 +775,6 @@ if(runSCCS){
 ```
 
 ### Table Results
-
 ```{r}
 #| label: sccs estimation table
 
@@ -811,8 +819,7 @@ if(runSCCS){
 ```
 
 ### Plot Results
-
-::: panel-tabset
+::: {.panel-tabset}
 ```{r}
 #| label: sccs estimation plot
 #| echo: false
@@ -840,24 +847,31 @@ if(runSCCS){
 
 ```
 :::
+  
 :::
 :::
-
+  
+  
 # Prediction {.break-slides}
-
+  
 ## Models
+  
+::: {style='font-size: 50%;'}
 
-::: {style="font-size: 50%;"}
-::: {.panel-tabset .nav-pills}
+:::: {.panel-tabset .nav-pills}
+
 ### Model Summary
 
-::: columns
+:::: {.columns}
+
 ::: {.column width="80%"}
+
 ```{r}
 #| label: prediction
 #| echo: false
 #| results: 'asis'
 if (F) {
+
 # panel for outcomes
 cat('\n::: {.panel-tabset .nav-pills}')
 for(outcomeId in outcomeIds){
@@ -920,24 +934,31 @@ for(outcomeId in outcomeIds){
 cat('\n:::') # outcome tabs
 }
 ```
+
 :::
-
+  
 ::: {.column width="20%"}
-> AUROC: A measure of model discrimination. 1 is best. Probability a random person with the outcome has a higher risk than an random person without the outcome.
 
-> e-stat: A measure of calibration. Smaller is better. How accurate the predicted risks are.
+> AUROC: A measure of model discrimination. 1 is best.  Probability a random person with the outcome has a higher risk than an random person without the outcome.
+
+> e-stat: A measure of calibration.  Smaller is better. How accurate the predicted risks are.
 
 > brier: Overall error. Smaller is better.
-:::
-:::
 
+:::
+  
+::::
+  
+  
 ### Top Predictors
-
+  
 ```{r}
 #| label: predictors
 #| echo: false
 #| results: 'asis'
+
 if (F) {
+
 # panel for outcomes
 cat('\n\n:::: {.panel-tabset .nav-pills}')
 for(outcomeId in outcomeIds){
@@ -1021,13 +1042,15 @@ for(outcomeId in outcomeIds){
 cat('\n\n::::')
 }
 ```
-:::
-:::
 
+::::
+  
+:::
+  
 # Conclusions {.break-slides}
-
+  
 ## Executive Summary
-
+  
 ```{r}
 #| label: executive summary
 #| echo: false
@@ -1059,7 +1082,6 @@ cat(paste0('\n\n## Target ',targetName, ' {#sec-target}\n\n'))
 
 ::: {.callout-note title="Cohort Definition"}
 ### Cohort Definition
-
 ```{r}
 #| echo: false
 #| results: 'asis'
@@ -1081,8 +1103,9 @@ markdown <- tryCatch(
 cat(markdown)
 
 ```
-:::
 
+:::
+  
 ```{r}
 #| echo: false
 #| results: 'asis'
@@ -1114,6 +1137,8 @@ if(!is.null(subsetId)){
 }
 
 ```
+
+
 
 ```{r}
 #| label: outcomes
@@ -1147,11 +1172,12 @@ for(i in 1:length(outcomeNames)){
 
 ```
 
+
 ```{r}
 #| label: indication
 #| echo: false
 #| results: 'asis'
-if(!is.null(subsetId) & includeIndication){
+if(!is.null(subsetId)){
   # Indication
   # subCohort from the target code
   indicationId <- strsplit(
@@ -1186,6 +1212,8 @@ if(!is.null(subsetId) & includeIndication){
   cat('\n\n:::')
 }
 ```
+
+
 
 ```{r}
 #| label: comparators
